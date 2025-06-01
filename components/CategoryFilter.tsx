@@ -8,16 +8,16 @@ interface CategoryFilterProps {
 }
 
 const categoryLabels: Record<VocabularyCategory, string> = {
-  pronouns: 'Pronombres',
-  family: 'Familia',
-  numbers: 'Números',
-  time: 'Tiempo',
-  countries: 'Países',
-  food: 'Comida',
-  animals: 'Animales',
-  verbs: 'Verbos',
-  other: 'Otros',
-  names: 'Nombres'
+  pronouns: 'Pronouns',
+  family: 'Family',
+  numbers: 'Numbers',
+  time: 'Time',
+  countries: 'Countries',
+  food: 'Food',
+  animals: 'Animals',
+  verbs: 'Verbs',
+  other: 'Other',
+  names: 'Names'
 };
 
 export default function CategoryFilter({ selectedCategories, onCategoryToggle }: CategoryFilterProps) {
@@ -32,7 +32,7 @@ export default function CategoryFilter({ selectedCategories, onCategoryToggle }:
           className={`px-4 py-2 rounded-lg transition-colors font-medium ${
             selectedCategories.includes(category)
               ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+              : 'bg-gray-200 text-black hover:bg-gray-300'
           }`}
         >
           {categoryLabels[category]}

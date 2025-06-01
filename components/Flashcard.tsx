@@ -29,12 +29,12 @@ export default function Flashcard({ item, onCorrect, onIncorrect, onNext }: Flas
     <div className="max-w-2xl mx-auto p-8">
       <div className="bg-white rounded-xl shadow-lg p-8 min-h-[400px] flex flex-col justify-center">
         <div className="text-center">
-          <h2 className="text-8xl font-bold mb-4 text-gray-900">{item.chinese}</h2>
+          <h2 className="text-8xl font-bold mb-4 text-black">{item.chinese}</h2>
           {showAnswer && (
             <>
-              <p className="text-3xl mb-2 text-gray-800 font-medium">{item.pinyin}</p>
-              <p className="text-2xl mb-2 text-blue-700 font-semibold">{item.spanish}</p>
-              <p className="text-xl text-gray-700">{item.english}</p>
+              <p className="text-3xl mb-2 text-black font-medium">{item.pinyin}</p>
+              <p className="text-2xl mb-2 text-black font-semibold">{item.spanish}</p>
+              <p className="text-xl text-black">{item.english}</p>
             </>
           )}
         </div>
@@ -45,7 +45,7 @@ export default function Flashcard({ item, onCorrect, onIncorrect, onNext }: Flas
               onClick={() => setShowAnswer(true)}
               className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
-              Mostrar respuesta
+              Show Answer
             </button>
           ) : (
             <>
@@ -53,13 +53,13 @@ export default function Flashcard({ item, onCorrect, onIncorrect, onNext }: Flas
                 onClick={handleIncorrect}
                 className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
               >
-                Incorrecto
+                Incorrect
               </button>
               <button
                 onClick={handleCorrect}
                 className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
               >
-                Correcto
+                Correct
               </button>
             </>
           )}

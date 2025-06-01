@@ -5,17 +5,23 @@ import { Progress } from '@/types/vocabulary';
 
 export function useProgress() {
   const [progress, setProgress] = useState<Progress[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem('chinese-practice-progress');
-    if (stored) {
-      setProgress(JSON.parse(stored));
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('chinese-practice-progress');
+      if (stored) {
+        setProgress(JSON.parse(stored));
+      }
+      setIsLoaded(true);
     }
   }, []);
 
   const saveProgress = (updatedProgress: Progress[]) => {
     setProgress(updatedProgress);
-    localStorage.setItem('chinese-practice-progress', JSON.stringify(updatedProgress));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('chinese-practice-progress', JSON.stringify(updatedProgress));
+    }
   };
 
   const updateItemProgress = (itemId: string, correct: boolean) => {
@@ -51,13 +57,16 @@ export function useProgress() {
 
   const resetProgress = () => {
     setProgress([]);
-    localStorage.removeItem('chinese-practice-progress');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('chinese-practice-progress');
+    }
   };
 
   return {
     progress,
     updateItemProgress,
     getItemProgress,
-    resetProgress
+    resetProgress,
+    isLoaded
   };
 }

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Práctica de Caracteres Chinos",
-  description: "Aplicación para aprender caracteres chinos con español e inglés",
+  title: "Chinese Character Practice",
+  description: "Application to learn Chinese characters with Spanish and English translations",
 };
 
 export default function RootLayout({
@@ -26,6 +26,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         {children}
       </body>
