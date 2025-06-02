@@ -38,7 +38,6 @@ export default function PinyinTypingPractice() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
   const [practiceMode, setPracticeMode] = useState<'sequential' | 'random' | 'review'>('sequential');
-  const [errorCount, setErrorCount] = useState(0);
   const [hskLevel, setHskLevel] = useState<'hsk1' | 'hsk2' | 'hsk3' | 'hsk4' | 'hsk1-2' | 'hsk1-3' | 'hsk1-4' | 'all'>('hsk1');
   const [isCompleted, setIsCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -102,7 +101,6 @@ export default function PinyinTypingPractice() {
     setShowCorrectAnswer(false);
     setPracticedWords(new Set());
     setIsCompleted(false);
-    setErrorCount(0);
     setIsLoading(false);
   }, [practiceMode, progress, hskLevel, selectedCategories]);
 
@@ -168,12 +166,6 @@ export default function PinyinTypingPractice() {
         // Immediately show loading when correct
         setIsLoading(true);
         handleCorrectAnswer(!showCorrectAnswer);
-      } else if (input.length >= currentWord.pinyin.length && !pinyinWithTones.startsWith(trimmedInput) && !pinyinWithoutTones.startsWith(trimmedInputWithoutTones)) {
-        // If the input is long enough and doesn't match, increment error count
-        setErrorCount(prev => {
-          const newCount = prev + 1;
-          return newCount;
-        });
       }
     }
     
@@ -252,7 +244,6 @@ export default function PinyinTypingPractice() {
     setUserInput('');
     setIsCorrect(null);
     setShowCorrectAnswer(false);
-    setErrorCount(0);
     
     // Calculate next index first
     let newIndex: number;
