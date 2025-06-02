@@ -19,3 +19,32 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Mobile-specific optimizations */
+@media (max-width: 640px) {
+  /* Prevent zoom on input focus on iOS */
+  input[type="text"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Better touch targets */
+  button {
+    min-height: 44px;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Prevent horizontal scroll */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  overflow-x: hidden;
+}

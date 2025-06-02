@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { vocabulary } from '@/data/vocabulary';
+import { useState, useEffect, useRef } from 'react';
+import { hsk1Vocabulary, hsk2Vocabulary, hsk3Vocabulary, hsk4Vocabulary } from '@/data/vocabulary';
 import { VocabularyItem, VocabularyCategory } from '@/types/vocabulary';
 import { useProgress } from '@/hooks/useProgress';
+import CategoryFilter from '@/components/CategoryFilter';
 
 interface PracticeStats {
   totalAttempts: number;
@@ -13,18 +14,6 @@ interface PracticeStats {
   bestStreak: number;
 }
 
-const CATEGORIES: { value: VocabularyCategory; label: string }[] = [
-  { value: 'pronouns', label: 'Pronouns' },
-  { value: 'family', label: 'Family' },
-  { value: 'numbers', label: 'Numbers' },
-  { value: 'time', label: 'Time' },
-  { value: 'countries', label: 'Countries' },
-  { value: 'food', label: 'Food' },
-  { value: 'animals', label: 'Animals' },
-  { value: 'verbs', label: 'Verbs' },
-  { value: 'other', label: 'Other' },
-  { value: 'names', label: 'Names' }
-];
 
 // Function to remove tone marks from pinyin
 const removeTones = (pinyin: string): string => {
@@ -41,15 +30,19 @@ const removeTones = (pinyin: string): string => {
 };
 
 export default function PinyinTypingPractice() {
-  const [selectedCategories, setSelectedCategories] = useState<VocabularyCategory[]>(['pronouns']);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [filteredVocabulary, setFilteredVocabulary] = useState<VocabularyItem[]>([]);
   const [userInput, setUserInput] = useState('');
   const [showTranslation, setShowTranslation] = useState(true);
   const [showHint, setShowHint] = useState(false);
+  const [hintsEnabled, setHintsEnabled] = useState(true);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
   const [practiceMode, setPracticeMode] = useState<'sequential' | 'random' | 'review'>('sequential');
+  const [errorCount, setErrorCount] = useState(0);
+  const [hskLevel, setHskLevel] = useState<'hsk1' | 'hsk2' | 'hsk3' | 'hsk4' | 'hsk1-2' | 'hsk1-3' | 'hsk1-4' | 'all'>('hsk1');
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState<PracticeStats>({
     totalAttempts: 0,
     correctFirstTry: 0,
@@ -58,35 +51,67 @@ export default function PinyinTypingPractice() {
     bestStreak: 0
   });
   const [practicedWords, setPracticedWords] = useState<Set<string>>(new Set());
+  const [selectedCategories, setSelectedCategories] = useState<VocabularyCategory[]>([]);
+  const [showCategoryFilter, setShowCategoryFilter] = useState(false);
 
   const { progress, updateItemProgress } = useProgress();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Filter vocabulary based on selected categories
+  // Filter vocabulary based on HSK level and categories
   useEffect(() => {
-    const filtered = vocabulary.filter(item => 
-      selectedCategories.includes(item.category)
-    );
+    let vocabToUse: VocabularyItem[] = [];
+    
+    if (hskLevel === 'hsk1') {
+      vocabToUse = hsk1Vocabulary;
+    } else if (hskLevel === 'hsk2') {
+      vocabToUse = hsk2Vocabulary;
+    } else if (hskLevel === 'hsk3') {
+      vocabToUse = hsk3Vocabulary;
+    } else if (hskLevel === 'hsk4') {
+      vocabToUse = hsk4Vocabulary;
+    } else if (hskLevel === 'hsk1-2') {
+      vocabToUse = [...hsk1Vocabulary, ...hsk2Vocabulary];
+    } else if (hskLevel === 'hsk1-3') {
+      vocabToUse = [...hsk1Vocabulary, ...hsk2Vocabulary, ...hsk3Vocabulary];
+    } else if (hskLevel === 'hsk1-4') {
+      vocabToUse = [...hsk1Vocabulary, ...hsk2Vocabulary, ...hsk3Vocabulary, ...hsk4Vocabulary];
+    } else {
+      vocabToUse = [...hsk1Vocabulary, ...hsk2Vocabulary, ...hsk3Vocabulary, ...hsk4Vocabulary];
+    }
+    
+    // Apply category filter if categories are selected
+    if (selectedCategories.length > 0) {
+      vocabToUse = vocabToUse.filter(item => selectedCategories.includes(item.category));
+    }
     
     if (practiceMode === 'review') {
       // Only show words that have been attempted but not mastered
-      const reviewWords = filtered.filter(item => {
+      const reviewWords = vocabToUse.filter(item => {
         const itemProgress = progress.find(p => p.itemId === item.id);
         return itemProgress && itemProgress.correctCount < 3; // Not mastered yet
       });
-      setFilteredVocabulary(reviewWords.length > 0 ? reviewWords : filtered);
+      setFilteredVocabulary(reviewWords.length > 0 ? reviewWords : vocabToUse);
     } else {
-      setFilteredVocabulary(filtered);
+      setFilteredVocabulary(vocabToUse);
     }
     
-    setCurrentWordIndex(0);
+    // Only reset index if vocabulary changed
+    if (vocabToUse.length > 0) {
+      setCurrentWordIndex(0);
+    }
     setUserInput('');
     setShowHint(false);
     setShowCorrectAnswer(false);
     setPracticedWords(new Set());
-  }, [selectedCategories, practiceMode, progress]);
+    setIsCompleted(false);
+    setErrorCount(0);
+    setIsLoading(false);
+  }, [practiceMode, progress, hskLevel, selectedCategories]);
 
-  const currentWord = filteredVocabulary[currentWordIndex];
+  // Always use currentWordIndex for display to prevent flashing
+  const currentWord = filteredVocabulary.length > 0 && currentWordIndex < filteredVocabulary.length 
+    ? filteredVocabulary[currentWordIndex] 
+    : null;
   
   // Track when a new word is shown
   useEffect(() => {
@@ -97,7 +122,7 @@ export default function PinyinTypingPractice() {
         return newSet;
       });
     }
-  }, [currentWord?.id, practiceMode]);
+  }, [currentWord?.id, practiceMode, currentWord]);
   
   // Calculate progress based on mode
   const progressInfo = (() => {
@@ -122,14 +147,6 @@ export default function PinyinTypingPractice() {
     }
   })();
 
-  const handleCategoryToggle = (category: VocabularyCategory) => {
-    setSelectedCategories(prev => {
-      if (prev.includes(category)) {
-        return prev.length > 1 ? prev.filter(c => c !== category) : prev;
-      }
-      return [...prev, category];
-    });
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value.toLowerCase();
@@ -139,19 +156,29 @@ export default function PinyinTypingPractice() {
     if (currentWord && input.length > 0 && !showCorrectAnswer) {
       const pinyinWithTones = currentWord.pinyin.toLowerCase().replace(/'/g, ' ');
       const pinyinWithoutTones = removeTones(currentWord.pinyin);
-      const inputWithoutTones = removeTones(input);
       const trimmedInput = input.trim();
       const trimmedInputWithoutTones = removeTones(trimmedInput);
       
       if (trimmedInput === pinyinWithTones || trimmedInputWithoutTones === pinyinWithoutTones) {
+        // Immediately show loading when correct
+        setIsLoading(true);
         handleCorrectAnswer(!showCorrectAnswer);
+      } else if (input.length >= currentWord.pinyin.length && !pinyinWithTones.startsWith(trimmedInput) && !pinyinWithoutTones.startsWith(trimmedInputWithoutTones)) {
+        // If the input is long enough and doesn't match, increment error count
+        setErrorCount(prev => {
+          const newCount = prev + 1;
+          // Show hint automatically after 3 errors if hints are enabled
+          if (newCount >= 3 && !showHint && hintsEnabled && currentWord.hint) {
+            setShowHint(true);
+          }
+          return newCount;
+        });
       }
     }
     
     if (showCorrectAnswer && currentWord) {
       const pinyinWithTones = currentWord.pinyin.toLowerCase().replace(/'/g, ' ');
       const pinyinWithoutTones = removeTones(currentWord.pinyin);
-      const inputWithoutTones = removeTones(input);
       const trimmedInput = input.trim();
       const trimmedInputWithoutTones = removeTones(trimmedInput);
       
@@ -166,7 +193,8 @@ export default function PinyinTypingPractice() {
             : [...prev.wordsLearned, currentWord.id]
         }));
         updateItemProgress(currentWord.id, false); // Mark as incorrect since they needed to see answer
-        setTimeout(() => moveToNextWord(), 1000);
+        setIsLoading(true);
+        setTimeout(() => moveToNextWord(), 200);
       }
     }
   };
@@ -199,7 +227,8 @@ export default function PinyinTypingPractice() {
       }));
     }
     
-    setTimeout(() => moveToNextWord(), 1500);
+    // Move to next word immediately since loading is already set
+    setTimeout(() => moveToNextWord(), 200);
   };
 
   const handleSkip = () => {
@@ -218,13 +247,16 @@ export default function PinyinTypingPractice() {
   };
 
   const moveToNextWord = () => {
+    // Clear current state
     setUserInput('');
     setIsCorrect(null);
     setShowHint(false);
     setShowCorrectAnswer(false);
+    setErrorCount(0);
     
+    // Calculate next index first
+    let newIndex: number;
     if (practiceMode === 'random') {
-      let newIndex;
       // Try to find a word we haven't practiced yet
       const unpracticedIndices = filteredVocabulary
         .map((_, index) => index)
@@ -237,19 +269,34 @@ export default function PinyinTypingPractice() {
         // All words practiced, pick any random word
         newIndex = Math.floor(Math.random() * filteredVocabulary.length);
       }
-      setCurrentWordIndex(newIndex);
     } else {
-      setCurrentWordIndex(prev => {
-        const nextIndex = prev + 1;
-        return nextIndex >= filteredVocabulary.length ? 0 : nextIndex;
-      });
+      // Sequential mode
+      newIndex = currentWordIndex + 1;
+      if (newIndex >= filteredVocabulary.length) {
+        // Completed all words in sequential mode
+        setIsCompleted(true);
+        setIsLoading(false);
+        return; // Don't continue
+      }
     }
     
+    // If not already loading, set loading state
+    if (!isLoading) {
+      setIsLoading(true);
+    }
+    
+    // Apply the new index after a delay
     setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, 100);
+      setCurrentWordIndex(newIndex);
+      setIsLoading(false);
+      
+      // Focus input
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 50);
+    }, 150); // Small delay for smooth transition
   };
 
   const getAccuracyColor = (accuracy: number) => {
@@ -258,69 +305,71 @@ export default function PinyinTypingPractice() {
     return 'text-red-600';
   };
 
-  if (filteredVocabulary.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[600px] p-8">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-4xl w-full">
-          <h2 className="text-3xl font-bold text-center mb-6 text-black">Pinyin Typing Practice</h2>
-          
-          <div className="mb-6">
-            <p className="text-center mb-4 text-black">Select categories to practice:</p>
-            <div className="flex flex-wrap gap-2 justify-center">
-              {CATEGORIES.map(category => (
-                <button
-                  key={category.value}
-                  onClick={() => handleCategoryToggle(category.value)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                    selectedCategories.includes(category.value)
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-black hover:bg-gray-300'
-                  }`}
-                >
-                  {category.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const accuracy = stats.totalAttempts > 0 
     ? Math.round((stats.correctFirstTry / stats.totalAttempts) * 100)
     : 0;
 
   return (
-    <div className="flex flex-col items-center p-4 max-w-5xl mx-auto">
+    <div className="flex flex-col items-center p-2 sm:p-4 max-w-5xl mx-auto">
       {/* Header Stats */}
-      <div className="bg-white shadow-md rounded-lg p-4 w-full mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-black">Pinyin Typing Practice</h2>
-          <div className="flex gap-4">
+      <div className="bg-white shadow-md rounded-lg p-3 sm:p-4 w-full mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4">
+          <h2 className="text-xl sm:text-2xl font-bold text-black">Pinyin Practice</h2>
+          <div className="flex flex-wrap gap-2 sm:gap-4">
+            <select
+              value={hskLevel}
+              onChange={(e) => setHskLevel(e.target.value as 'hsk1' | 'hsk2' | 'hsk3' | 'hsk4' | 'hsk1-2' | 'hsk1-3' | 'hsk1-4' | 'all')}
+              className="px-2 py-1 sm:px-3 rounded-lg border border-gray-300 text-black text-xs sm:text-sm font-medium"
+            >
+              <option value="hsk1">HSK 1</option>
+              <option value="hsk2">HSK 2</option>
+              <option value="hsk3">HSK 3</option>
+              <option value="hsk4">HSK 4</option>
+              <option value="hsk1-2">HSK 1 & 2</option>
+              <option value="hsk1-3">HSK 1-3</option>
+              <option value="hsk1-4">HSK 1-4</option>
+              <option value="all">All Levels</option>
+            </select>
             <button
               onClick={() => setShowTranslation(!showTranslation)}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+              className={`px-2 py-1 sm:px-3 rounded-full text-xs sm:text-sm font-medium transition-all ${
                 showTranslation ? 'bg-green-600 text-white' : 'bg-gray-400 text-white'
               }`}
             >
               Translation {showTranslation ? 'ON' : 'OFF'}
             </button>
+            <button
+              onClick={() => setHintsEnabled(!hintsEnabled)}
+              className={`px-2 py-1 sm:px-3 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                hintsEnabled ? 'bg-purple-600 text-white' : 'bg-gray-400 text-white'
+              }`}
+            >
+              Hints {hintsEnabled ? 'ON' : 'OFF'}
+            </button>
             <select
               value={practiceMode}
-              onChange={(e) => setPracticeMode(e.target.value as any)}
-              className="px-3 py-1 rounded-lg border border-gray-300 text-black text-sm"
+              onChange={(e) => setPracticeMode(e.target.value as 'sequential' | 'random' | 'review')}
+              className="px-2 py-1 sm:px-3 rounded-lg border border-gray-300 text-black text-xs sm:text-sm"
             >
               <option value="sequential">Sequential</option>
               <option value="random">Random</option>
               <option value="review">Review Mistakes</option>
             </select>
+            <button
+              onClick={() => setShowCategoryFilter(!showCategoryFilter)}
+              className={`px-2 py-1 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                showCategoryFilter ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              {selectedCategories.length > 0 ? `Categories (${selectedCategories.length})` : 'Categories'}
+            </button>
           </div>
         </div>
         
         {/* Progress Bar */}
-        <div className="mb-4">
-          <div className="flex justify-between text-sm text-gray-600 mb-1">
+        <div className="mb-3 sm:mb-4">
+          <div className="flex justify-between text-xs sm:text-sm text-gray-600 mb-1">
             <span>
               {practiceMode === 'random' 
                 ? `Unique Words: ${progressInfo.current} / ${progressInfo.total}`
@@ -329,9 +378,9 @@ export default function PinyinTypingPractice() {
             </span>
             <span>{progressInfo.percentage}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-3">
+          <div className="w-full bg-gray-200 rounded-full h-2 sm:h-3">
             <div 
-              className={`h-3 rounded-full transition-all duration-300 ${
+              className={`h-2 sm:h-3 rounded-full transition-all duration-300 ${
                 practiceMode === 'random' && progressInfo.percentage === 100
                   ? 'bg-green-600'
                   : 'bg-blue-600'
@@ -341,75 +390,121 @@ export default function PinyinTypingPractice() {
           </div>
         </div>
         
+        {/* Current Level Indicator */}
+        <div className="text-center mb-2">
+          <span className="inline-block px-2 py-1 sm:px-3 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm font-medium">
+            {hskLevel === 'hsk1' ? 'HSK 1' : 
+             hskLevel === 'hsk2' ? 'HSK 2' : 
+             hskLevel === 'hsk3' ? 'HSK 3' :
+             hskLevel === 'hsk4' ? 'HSK 4' :
+             hskLevel === 'hsk1-2' ? 'HSK 1 & 2' :
+             hskLevel === 'hsk1-3' ? 'HSK 1-3' :
+             hskLevel === 'hsk1-4' ? 'HSK 1-4' :
+             'All Levels'} ({filteredVocabulary.length} words{selectedCategories.length > 0 ? ' filtered' : ''})
+          </span>
+        </div>
+        
         {/* Stats Row */}
-        <div className="grid grid-cols-4 gap-4 text-center">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center">
           <div>
-            <p className="text-sm font-medium text-gray-600">Accuracy</p>
-            <p className={`text-xl font-bold ${getAccuracyColor(accuracy)}`}>{accuracy}%</p>
+            <p className="text-xs sm:text-sm font-medium text-gray-600">Accuracy</p>
+            <p className={`text-lg sm:text-xl font-bold ${getAccuracyColor(accuracy)}`}>{accuracy}%</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600">Words Learned</p>
-            <p className="text-xl font-bold text-black">{stats.wordsLearned.length}</p>
+            <p className="text-xs sm:text-sm font-medium text-gray-600">Words Learned</p>
+            <p className="text-lg sm:text-xl font-bold text-black">{stats.wordsLearned.length}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600">Current Streak</p>
-            <p className="text-xl font-bold text-orange-600">🔥 {stats.currentStreak}</p>
+            <p className="text-xs sm:text-sm font-medium text-gray-600">Current Streak</p>
+            <p className="text-lg sm:text-xl font-bold text-orange-600">🔥 {stats.currentStreak}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600">Best Streak</p>
-            <p className="text-xl font-bold text-purple-600">⭐ {stats.bestStreak}</p>
+            <p className="text-xs sm:text-sm font-medium text-gray-600">Best Streak</p>
+            <p className="text-lg sm:text-xl font-bold text-purple-600">⭐ {stats.bestStreak}</p>
           </div>
         </div>
       </div>
 
-      {/* Category Selection */}
-      <div className="bg-white rounded-lg shadow p-4 w-full mb-6">
-        <div className="flex flex-wrap gap-2 justify-center">
-          {CATEGORIES.map(category => (
-            <button
-              key={category.value}
-              onClick={() => handleCategoryToggle(category.value)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
-                selectedCategories.includes(category.value)
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-black hover:bg-gray-300'
-              }`}
-            >
-              {category.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Category Filter */}
+      {showCategoryFilter && (
+        <CategoryFilter
+          selectedCategories={selectedCategories}
+          onCategoryChange={setSelectedCategories}
+        />
+      )}
 
       {/* Main Practice Area */}
-      {currentWord && (
-        <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-2xl">
-          <div className="text-center mb-8">
-            <p className="text-8xl font-bold mb-4 text-black">{currentWord.chinese}</p>
+      {isLoading ? (
+        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-8 w-full max-w-2xl">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <p className="mt-4 text-sm sm:text-base text-gray-600">Loading next character...</p>
+          </div>
+        </div>
+      ) : isCompleted ? (
+        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-8 w-full max-w-2xl text-center">
+          <h3 className="text-2xl sm:text-3xl font-bold text-green-600 mb-4">🎉 Congratulations!</h3>
+          <p className="text-lg sm:text-xl text-gray-700 mb-6">
+            You&apos;ve completed all {filteredVocabulary.length} words in sequential mode!
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+            <button
+              onClick={() => {
+                setCurrentWordIndex(0);
+                setIsCompleted(false);
+                setStats({
+                  totalAttempts: 0,
+                  correctFirstTry: 0,
+                  wordsLearned: [],
+                  currentStreak: 0,
+                  bestStreak: 0
+                });
+              }}
+              className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-all text-sm sm:text-base"
+            >
+              Start Over
+            </button>
+            <button
+              onClick={() => setPracticeMode('random')}
+              className="px-4 py-2 sm:px-6 sm:py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-all text-sm sm:text-base"
+            >
+              Switch to Random Mode
+            </button>
+          </div>
+        </div>
+      ) : currentWord && !isLoading ? (
+        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-8 w-full max-w-2xl">
+          <div className="text-center mb-6 sm:mb-8">
+            <p className="text-6xl sm:text-8xl font-bold mb-3 sm:mb-4 text-black">{currentWord.chinese}</p>
             {showTranslation && (
-              <p className="text-xl text-gray-700 mb-2">{currentWord.english}</p>
+              <p className="text-lg sm:text-xl text-gray-700 mb-2">{currentWord.english}</p>
             )}
-            {showHint && (
-              <p className="text-lg text-purple-600 font-medium animate-pulse">
-                Hint: {removeTones(currentWord.pinyin).slice(0, Math.ceil(currentWord.pinyin.length / 2))}...
-              </p>
+            {showHint && hintsEnabled && currentWord.hint && (
+              <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <p className="text-base sm:text-lg text-purple-800 font-medium">
+                  💡 Memory Hint:
+                </p>
+                <p className="text-sm sm:text-md text-purple-700 mt-1">
+                  {currentWord.hint}
+                </p>
+              </div>
             )}
             {showCorrectAnswer && (
-              <div className="mt-4">
-                <p className="text-lg text-red-600 font-bold">Correct answer: {currentWord.pinyin}</p>
-                <p className="text-md text-gray-700 mt-1">({currentWord.english})</p>
-                <p className="text-sm text-gray-600 mt-2">Type it to continue</p>
+              <div className="mt-3 sm:mt-4">
+                <p className="text-base sm:text-lg text-red-600 font-bold">Correct answer: {currentWord.pinyin}</p>
+                <p className="text-sm sm:text-md text-gray-700 mt-1">({currentWord.english})</p>
+                <p className="text-xs sm:text-sm text-gray-600 mt-2">Type it to continue</p>
               </div>
             )}
           </div>
 
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <input
               ref={inputRef}
               type="text"
               value={userInput}
               onChange={handleInputChange}
-              className={`w-full px-6 py-4 text-2xl text-center border-4 rounded-lg focus:outline-none text-black transition-all ${
+              className={`w-full px-4 py-3 sm:px-6 sm:py-4 text-xl sm:text-2xl text-center border-4 rounded-lg focus:outline-none text-black transition-all ${
                 isCorrect === true 
                   ? 'border-green-500 bg-green-50' 
                   : isCorrect === false 
@@ -431,42 +526,49 @@ export default function PinyinTypingPractice() {
                     const trimmedInput = userInput.trim().toLowerCase();
                     const inputWithoutTones = removeTones(trimmedInput);
                     
-                    return pinyinWithTones.startsWith(trimmedInput) || pinyinWithoutTones.startsWith(inputWithoutTones) ? (
-                      <span className="text-green-600 font-medium">✓ Keep going!</span>
-                    ) : (
-                      <span className="text-red-600 font-medium">✗ Check your spelling</span>
-                    );
+                    const isOnTrack = pinyinWithTones.startsWith(trimmedInput) || pinyinWithoutTones.startsWith(inputWithoutTones);
+                    
+                    if (isOnTrack) {
+                      return <span className="text-sm sm:text-base text-green-600 font-medium">✓ Keep going!</span>;
+                    } else {
+                      return (
+                        <div>
+                          <span className="text-sm sm:text-base text-red-600 font-medium">✗ Check your spelling</span>
+                          {errorCount >= 2 && !showHint && hintsEnabled && currentWord.hint && (
+                            <span className="text-xs sm:text-sm text-orange-600 ml-2">(Hint available - press the hint button)</span>
+                          )}
+                        </div>
+                      );
+                    }
                   })()}
                 </div>
               )}
               
-              {isCorrect && (
-                <div className="text-center">
-                  <span className="text-green-600 font-bold text-xl">Correct! ✓</span>
-                </div>
-              )}
+              {/* Remove Correct! message since we show loading immediately */}
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-center gap-3">
-            <button
-              onClick={() => setShowHint(true)}
-              disabled={showHint || showCorrectAnswer || isCorrect}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                showHint || showCorrectAnswer || isCorrect
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-purple-600 text-white hover:bg-purple-700'
-              }`}
-            >
-              💡 Hint
-            </button>
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+            {hintsEnabled && (
+              <button
+                onClick={() => setShowHint(true)}
+                disabled={showHint || showCorrectAnswer || !!isCorrect || !currentWord?.hint}
+                className={`px-3 py-2 sm:px-4 rounded-lg text-sm sm:text-base font-medium transition-all ${
+                  showHint || showCorrectAnswer || !!isCorrect || !currentWord?.hint
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-purple-600 text-white hover:bg-purple-700'
+                }`}
+              >
+                💡 Hint
+              </button>
+            )}
             
             <button
               onClick={handleSkip}
-              disabled={showCorrectAnswer || isCorrect}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                showCorrectAnswer || isCorrect
+              disabled={showCorrectAnswer || !!isCorrect}
+              className={`px-3 py-2 sm:px-4 rounded-lg text-sm sm:text-base font-medium transition-all ${
+                showCorrectAnswer || !!isCorrect
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   : 'bg-orange-600 text-white hover:bg-orange-700'
               }`}
@@ -475,12 +577,19 @@ export default function PinyinTypingPractice() {
             </button>
             
             <button
-              onClick={moveToNextWord}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-all"
+              onClick={() => {
+                setIsLoading(true);
+                setTimeout(() => moveToNextWord(), 100);
+              }}
+              className="px-3 py-2 sm:px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base font-medium transition-all"
             >
               Next Word →
             </button>
           </div>
+        </div>
+      ) : (
+        <div className="text-center py-8 sm:py-12">
+          <p className="text-sm sm:text-base text-black font-medium">No words available</p>
         </div>
       )}
     </div>

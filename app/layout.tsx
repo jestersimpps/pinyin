@@ -13,8 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Chinese Character Practice",
-  description: "Application to learn Chinese characters with Spanish and English translations",
+  title: "Pinyin Practice",
+  description: "Practice typing Pinyin for Chinese characters with memory hints",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
