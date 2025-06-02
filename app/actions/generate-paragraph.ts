@@ -19,8 +19,7 @@ interface GeneratedParagraph {
 
 export async function generateParagraph(
   vocabularyItems: VocabularyItem[], 
-  level: string,
-  allLevelVocabulary?: VocabularyItem[]
+  level: string
 ): Promise<GeneratedParagraph> {
   const wordList = vocabularyItems.map(item => ({
     chinese: item.chinese,
@@ -59,7 +58,7 @@ IMPORTANT:
 6. Make it conversational and realistic`;
 
   const { text } = await generateText({
-    model: openai('gpt-4o-mini'),
+    model: openai('gpt-4.1-mini'),
     prompt,
   });
 
@@ -67,7 +66,7 @@ IMPORTANT:
   let parsedResponse;
   try {
     parsedResponse = JSON.parse(text);
-  } catch (e) {
+  } catch {
     // Fallback if not valid JSON
     parsedResponse = {
       paragraph: text.trim(),
@@ -81,7 +80,13 @@ IMPORTANT:
 
   // Use the AI-provided word list if available
   if (parsedResponse.allWords && Array.isArray(parsedResponse.allWords)) {
-    words = parsedResponse.allWords.map((word: any) => ({
+    interface WordData {
+      chinese: string;
+      pinyin: string;
+      english?: string;
+      position: number;
+    }
+    words = parsedResponse.allWords.map((word: WordData) => ({
       chinese: word.chinese,
       pinyin: word.pinyin,
       english: word.english || '',

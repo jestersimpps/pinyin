@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { hsk1Vocabulary, hsk2Vocabulary, hsk3Vocabulary, hsk4Vocabulary } from '@/data/vocabulary';
 import { VocabularyItem } from '@/types/vocabulary';
 import { generateParagraph } from '@/app/actions/generate-paragraph';
@@ -43,7 +43,6 @@ export default function ParagraphPractice() {
   const [userInput, setUserInput] = useState('');
   const [showAnswers, setShowAnswers] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [completedCount, setCompletedCount] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [completedWords, setCompletedWords] = useState<Set<number>>(new Set());
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -75,7 +74,6 @@ export default function ParagraphPractice() {
     setShowAnswers(false);
     setUserInput('');
     setPinyinAnswer('');
-    setCompletedCount(0);
     setIsCompleted(false);
     setCompletedWords(new Set());
     
@@ -182,12 +180,10 @@ export default function ParagraphPractice() {
     }
     
     setCompletedWords(newCompletedWords);
-    setCompletedCount(newCompletedWords.size);
     
     // Check for match (ignoring tones and punctuation)
     if (normalizedInput === normalizedExpected) {
       setIsCompleted(true);
-      setCompletedCount(paragraphWords.length);
     }
   };
 
@@ -243,7 +239,7 @@ export default function ParagraphPractice() {
           <h2 className="text-2xl font-bold text-black">Paragraph Practice</h2>
           <select
             value={hskLevel}
-            onChange={(e) => setHskLevel(e.target.value as any)}
+            onChange={(e) => setHskLevel(e.target.value as 'hsk1' | 'hsk2' | 'hsk3' | 'hsk4' | 'hsk1-2' | 'hsk1-3' | 'hsk1-4')}
             className="px-3 py-1 rounded-lg border border-gray-300 text-black text-sm font-medium"
           >
             <option value="hsk1">HSK 1</option>
@@ -309,7 +305,7 @@ export default function ParagraphPractice() {
                 {(() => {
                   if (!paragraph || paragraphWords.length === 0) return paragraph;
                   
-                  let result = [];
+                  const result = [];
                   let lastPosition = 0;
                   
                   paragraphWords.forEach((word, index) => {
@@ -404,7 +400,7 @@ export default function ParagraphPractice() {
           </div>
         ) : (
           <div className="text-center text-gray-500">
-            <p className="mb-4">Click "New Paragraph" to generate a practice paragraph</p>
+            <p className="mb-4">Click &quot;New Paragraph&quot; to generate a practice paragraph</p>
             <p className="text-sm">The AI will create a contextual paragraph using words from your selected HSK level</p>
           </div>
         )}
