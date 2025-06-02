@@ -30,15 +30,39 @@ const removeTones = (pinyin: string): string => {
 };
 
 export default function PinyinTypingPractice() {
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [currentWordIndex, setCurrentWordIndex] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('chinese-practice-current-index');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    }
+    return 0;
+  });
   const [filteredVocabulary, setFilteredVocabulary] = useState<VocabularyItem[]>([]);
   const [userInput, setUserInput] = useState('');
   const [showTranslation, setShowTranslation] = useState(true);
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
-  const [practiceMode, setPracticeMode] = useState<'sequential' | 'random' | 'review'>('sequential');
-  const [hskLevel, setHskLevel] = useState<'hsk1' | 'hsk2' | 'hsk3' | 'hsk4' | 'hsk1-2' | 'hsk1-3' | 'hsk1-4' | 'all'>('hsk1');
+  const [practiceMode, setPracticeMode] = useState<'sequential' | 'random' | 'review'>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('chinese-practice-mode');
+      if (stored) {
+        return stored as 'sequential' | 'random' | 'review';
+      }
+    }
+    return 'sequential';
+  });
+  const [hskLevel, setHskLevel] = useState<'hsk1' | 'hsk2' | 'hsk3' | 'hsk4' | 'hsk1-2' | 'hsk1-3' | 'hsk1-4' | 'all'>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('chinese-practice-hsk-level');
+      if (stored) {
+        return stored as 'hsk1' | 'hsk2' | 'hsk3' | 'hsk4' | 'hsk1-2' | 'hsk1-3' | 'hsk1-4' | 'all';
+      }
+    }
+    return 'hsk1';
+  });
   const [isCompleted, setIsCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState<PracticeStats>(() => {
@@ -56,13 +80,22 @@ export default function PinyinTypingPractice() {
       bestStreak: 0
     };
   });
-  const [practicedWords, setPracticedWords] = useState<Set<string>>(new Set());
+  const [practicedWords, setPracticedWords] = useState<Set<string>>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('chinese-practice-practiced-words');
+      if (stored) {
+        return new Set(JSON.parse(stored));
+      }
+    }
+    return new Set();
+  });
   const [selectedCategories, setSelectedCategories] = useState<VocabularyCategory[]>([]);
   const [showCategoryFilter, setShowCategoryFilter] = useState(false);
   const [optionsCollapsed, setOptionsCollapsed] = useState(false);
 
   const { progress, updateItemProgress } = useProgress();
   const inputRef = useRef<HTMLInputElement>(null);
+  const isInitialMount = useRef(true);
 
   // Save stats to localStorage whenever they change
   useEffect(() => {
@@ -70,6 +103,34 @@ export default function PinyinTypingPractice() {
       localStorage.setItem('chinese-practice-stats', JSON.stringify(stats));
     }
   }, [stats]);
+
+  // Save current word index to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('chinese-practice-current-index', JSON.stringify(currentWordIndex));
+    }
+  }, [currentWordIndex]);
+
+  // Save practiced words to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('chinese-practice-practiced-words', JSON.stringify(Array.from(practicedWords)));
+    }
+  }, [practicedWords]);
+
+  // Save practice mode to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('chinese-practice-mode', practiceMode);
+    }
+  }, [practiceMode]);
+
+  // Save HSK level to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('chinese-practice-hsk-level', hskLevel);
+    }
+  }, [hskLevel]);
 
   // Filter vocabulary based on HSK level and categories
   useEffect(() => {
@@ -109,7 +170,13 @@ export default function PinyinTypingPractice() {
       setFilteredVocabulary(vocabToUse);
     }
     
-    // Only reset index if vocabulary changed
+    // On initial mount, preserve the saved state
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    // Only reset when user actively changes settings
     if (vocabToUse.length > 0) {
       setCurrentWordIndex(0);
     }
@@ -396,7 +463,7 @@ export default function PinyinTypingPractice() {
             </button>
             <button
               onClick={() => {
-                if (confirm('Are you sure you want to reset your practice statistics?')) {
+                if (confirm('Are you sure you want to reset your practice statistics and progress?')) {
                   setStats({
                     totalAttempts: 0,
                     correctFirstTry: 0,
@@ -404,11 +471,14 @@ export default function PinyinTypingPractice() {
                     currentStreak: 0,
                     bestStreak: 0
                   });
+                  setCurrentWordIndex(0);
+                  setPracticedWords(new Set());
+                  setIsCompleted(false);
                 }
               }}
               className="px-2 py-1 sm:px-3 rounded-lg text-xs sm:text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-all"
             >
-              Reset Stats
+              Reset Progress
             </button>
           </div>
           )}
