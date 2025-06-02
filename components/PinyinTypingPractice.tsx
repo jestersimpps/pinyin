@@ -41,12 +41,20 @@ export default function PinyinTypingPractice() {
   const [hskLevel, setHskLevel] = useState<'hsk1' | 'hsk2' | 'hsk3' | 'hsk4' | 'hsk1-2' | 'hsk1-3' | 'hsk1-4' | 'all'>('hsk1');
   const [isCompleted, setIsCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [stats, setStats] = useState<PracticeStats>({
-    totalAttempts: 0,
-    correctFirstTry: 0,
-    wordsLearned: [],
-    currentStreak: 0,
-    bestStreak: 0
+  const [stats, setStats] = useState<PracticeStats>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('chinese-practice-stats');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    }
+    return {
+      totalAttempts: 0,
+      correctFirstTry: 0,
+      wordsLearned: [],
+      currentStreak: 0,
+      bestStreak: 0
+    };
   });
   const [practicedWords, setPracticedWords] = useState<Set<string>>(new Set());
   const [selectedCategories, setSelectedCategories] = useState<VocabularyCategory[]>([]);
@@ -55,6 +63,13 @@ export default function PinyinTypingPractice() {
 
   const { progress, updateItemProgress } = useProgress();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Save stats to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('chinese-practice-stats', JSON.stringify(stats));
+    }
+  }, [stats]);
 
   // Filter vocabulary based on HSK level and categories
   useEffect(() => {
@@ -379,6 +394,22 @@ export default function PinyinTypingPractice() {
             >
               {selectedCategories.length > 0 ? `Categories (${selectedCategories.length})` : 'Categories'}
             </button>
+            <button
+              onClick={() => {
+                if (confirm('Are you sure you want to reset your practice statistics?')) {
+                  setStats({
+                    totalAttempts: 0,
+                    correctFirstTry: 0,
+                    wordsLearned: [],
+                    currentStreak: 0,
+                    bestStreak: 0
+                  });
+                }
+              }}
+              className="px-2 py-1 sm:px-3 rounded-lg text-xs sm:text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-all"
+            >
+              Reset Stats
+            </button>
           </div>
           )}
         </div>
@@ -474,13 +505,7 @@ export default function PinyinTypingPractice() {
               onClick={() => {
                 setCurrentWordIndex(0);
                 setIsCompleted(false);
-                setStats({
-                  totalAttempts: 0,
-                  correctFirstTry: 0,
-                  wordsLearned: [],
-                  currentStreak: 0,
-                  bestStreak: 0
-                });
+                // Keep stats when starting over
               }}
               className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-all text-sm sm:text-base"
             >
