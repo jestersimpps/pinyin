@@ -121,23 +121,12 @@ export default function PinyinTypingPractice() {
     }
   }, [currentWord?.id, practiceMode, currentWord]);
 
-  // Keep input focused on mobile with enhanced handling
+  // Focus input when word changes
   useEffect(() => {
     if (currentWord && !isLoading && !isCompleted && inputRef.current) {
-      // Use setTimeout to work around mobile browser restrictions
       const timer = setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
-          // For iOS Safari, we need to handle focus differently
-          if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-            inputRef.current.setAttribute('readonly', 'readonly');
-            setTimeout(() => {
-              if (inputRef.current) {
-                inputRef.current.removeAttribute('readonly');
-                inputRef.current.focus();
-              }
-            }, 100);
-          }
         }
       }, 300);
       return () => clearTimeout(timer);
@@ -298,12 +287,10 @@ export default function PinyinTypingPractice() {
       setCurrentWordIndex(newIndex);
       setIsLoading(false);
       
-      // Enhanced mobile focus handling
+      // Focus input after transition
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
-          // Scroll input into view on mobile
-          inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }, 100);
     }, 150); // Small delay for smooth transition
@@ -468,16 +455,7 @@ export default function PinyinTypingPractice() {
       )}
 
       {/* Main Practice Area */}
-      <div 
-        className="w-full"
-        onTouchStart={(e) => {
-          // Keep keyboard open on mobile when touching the screen
-          if (inputRef.current && !isCompleted && !isLoading) {
-            e.preventDefault();
-            inputRef.current.focus();
-          }
-        }}
-      >
+      <div className="w-full">
       {isLoading ? (
         <div className="bg-white rounded-lg shadow-lg p-4 sm:p-8 w-full max-w-2xl">
           <div className="text-center">
@@ -561,14 +539,6 @@ export default function PinyinTypingPractice() {
               autoFocus
               inputMode="text"
               enterKeyHint="next"
-              onBlur={(e) => {
-                // Prevent keyboard from closing on mobile when tapping elsewhere
-                if (!isCompleted && !showCorrectAnswer) {
-                  setTimeout(() => {
-                    e.target.focus();
-                  }, 10);
-                }
-              }}
             />
             
             {/* Visual feedback */}
