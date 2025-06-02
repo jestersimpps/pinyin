@@ -34,7 +34,6 @@ export default function PinyinTypingPractice() {
   const [filteredVocabulary, setFilteredVocabulary] = useState<VocabularyItem[]>([]);
   const [userInput, setUserInput] = useState('');
   const [showTranslation, setShowTranslation] = useState(true);
-  const [showHint, setShowHint] = useState(false);
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
@@ -100,7 +99,6 @@ export default function PinyinTypingPractice() {
       setCurrentWordIndex(0);
     }
     setUserInput('');
-    setShowHint(false);
     setShowCorrectAnswer(false);
     setPracticedWords(new Set());
     setIsCompleted(false);
@@ -123,6 +121,13 @@ export default function PinyinTypingPractice() {
       });
     }
   }, [currentWord?.id, practiceMode, currentWord]);
+
+  // Keep input focused on mobile
+  useEffect(() => {
+    if (currentWord && !isLoading && !isCompleted && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [currentWord, isLoading, isCompleted]);
   
   // Calculate progress based on mode
   const progressInfo = (() => {
@@ -167,10 +172,6 @@ export default function PinyinTypingPractice() {
         // If the input is long enough and doesn't match, increment error count
         setErrorCount(prev => {
           const newCount = prev + 1;
-          // Show hint automatically after 3 errors if hints are enabled
-          if (newCount >= 3 && !showHint && hintsEnabled && currentWord.hint) {
-            setShowHint(true);
-          }
           return newCount;
         });
       }
@@ -250,7 +251,6 @@ export default function PinyinTypingPractice() {
     // Clear current state
     setUserInput('');
     setIsCorrect(null);
-    setShowHint(false);
     setShowCorrectAnswer(false);
     setErrorCount(0);
     
@@ -285,17 +285,20 @@ export default function PinyinTypingPractice() {
       setIsLoading(true);
     }
     
+    // Keep input focused to prevent keyboard from closing on mobile
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+    
     // Apply the new index after a delay
     setTimeout(() => {
       setCurrentWordIndex(newIndex);
       setIsLoading(false);
       
-      // Focus input
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 50);
+      // Ensure input stays focused
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
     }, 150); // Small delay for smooth transition
   };
 
@@ -479,7 +482,7 @@ export default function PinyinTypingPractice() {
             {showTranslation && (
               <p className="text-lg sm:text-xl text-gray-700 mb-2">{currentWord.english}</p>
             )}
-            {showHint && hintsEnabled && currentWord.hint && (
+            {hintsEnabled && currentWord.hint && (
               <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-purple-50 rounded-lg border border-purple-200">
                 <p className="text-base sm:text-lg text-purple-800 font-medium">
                   💡 Memory Hint:
@@ -514,6 +517,9 @@ export default function PinyinTypingPractice() {
               placeholder="Type pinyin here..."
               autoComplete="off"
               spellCheck={false}
+              autoFocus
+              inputMode="text"
+              enterKeyHint="next"
             />
             
             {/* Visual feedback */}
@@ -534,9 +540,6 @@ export default function PinyinTypingPractice() {
                       return (
                         <div>
                           <span className="text-sm sm:text-base text-red-600 font-medium">✗ Check your spelling</span>
-                          {errorCount >= 2 && !showHint && hintsEnabled && currentWord.hint && (
-                            <span className="text-xs sm:text-sm text-orange-600 ml-2">(Hint available - press the hint button)</span>
-                          )}
                         </div>
                       );
                     }
@@ -550,20 +553,6 @@ export default function PinyinTypingPractice() {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-            {hintsEnabled && (
-              <button
-                onClick={() => setShowHint(true)}
-                disabled={showHint || showCorrectAnswer || !!isCorrect || !currentWord?.hint}
-                className={`px-3 py-2 sm:px-4 rounded-lg text-sm sm:text-base font-medium transition-all ${
-                  showHint || showCorrectAnswer || !!isCorrect || !currentWord?.hint
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-purple-600 text-white hover:bg-purple-700'
-                }`}
-              >
-                💡 Hint
-              </button>
-            )}
-            
             <button
               onClick={handleSkip}
               disabled={showCorrectAnswer || !!isCorrect}
