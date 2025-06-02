@@ -51,6 +51,7 @@ export default function PinyinTypingPractice() {
   const [practicedWords, setPracticedWords] = useState<Set<string>>(new Set());
   const [selectedCategories, setSelectedCategories] = useState<VocabularyCategory[]>([]);
   const [showCategoryFilter, setShowCategoryFilter] = useState(false);
+  const [optionsCollapsed, setOptionsCollapsed] = useState(false);
 
   const { progress, updateItemProgress } = useProgress();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -120,10 +121,26 @@ export default function PinyinTypingPractice() {
     }
   }, [currentWord?.id, practiceMode, currentWord]);
 
-  // Keep input focused on mobile
+  // Keep input focused on mobile with enhanced handling
   useEffect(() => {
     if (currentWord && !isLoading && !isCompleted && inputRef.current) {
-      inputRef.current.focus();
+      // Use setTimeout to work around mobile browser restrictions
+      const timer = setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          // For iOS Safari, we need to handle focus differently
+          if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+            inputRef.current.setAttribute('readonly', 'readonly');
+            setTimeout(() => {
+              if (inputRef.current) {
+                inputRef.current.removeAttribute('readonly');
+                inputRef.current.focus();
+              }
+            }, 100);
+          }
+        }
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [currentWord, isLoading, isCompleted]);
   
@@ -276,20 +293,19 @@ export default function PinyinTypingPractice() {
       setIsLoading(true);
     }
     
-    // Keep input focused to prevent keyboard from closing on mobile
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-    
     // Apply the new index after a delay
     setTimeout(() => {
       setCurrentWordIndex(newIndex);
       setIsLoading(false);
       
-      // Ensure input stays focused
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
+      // Enhanced mobile focus handling
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          // Scroll input into view on mobile
+          inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
     }, 150); // Small delay for smooth transition
   };
 
@@ -309,7 +325,25 @@ export default function PinyinTypingPractice() {
       {/* Header Stats */}
       <div className="bg-white shadow-md rounded-lg p-3 sm:p-4 w-full mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4">
-          <h2 className="text-xl sm:text-2xl font-bold text-black">Pinyin Practice</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-black">Pinyin Practice</h2>
+            <button
+              onClick={() => setOptionsCollapsed(!optionsCollapsed)}
+              className="px-2 py-1 text-gray-600 hover:text-gray-800 transition-all"
+              aria-label={optionsCollapsed ? 'Expand options' : 'Collapse options'}
+            >
+              {optionsCollapsed ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+              )}
+            </button>
+          </div>
+          {!optionsCollapsed && (
           <div className="flex flex-wrap gap-2 sm:gap-4">
             <select
               value={hskLevel}
@@ -359,9 +393,10 @@ export default function PinyinTypingPractice() {
               {selectedCategories.length > 0 ? `Categories (${selectedCategories.length})` : 'Categories'}
             </button>
           </div>
+          )}
         </div>
         
-        {/* Progress Bar */}
+        {/* Progress Bar - Always visible */}
         <div className="mb-3 sm:mb-4">
           <div className="flex justify-between text-xs sm:text-sm text-gray-600 mb-1">
             <span>
@@ -383,6 +418,9 @@ export default function PinyinTypingPractice() {
             />
           </div>
         </div>
+        
+        {!optionsCollapsed && (
+        <>
         
         {/* Current Level Indicator */}
         <div className="text-center mb-2">
@@ -417,6 +455,8 @@ export default function PinyinTypingPractice() {
             <p className="text-lg sm:text-xl font-bold text-purple-600">⭐ {stats.bestStreak}</p>
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {/* Category Filter */}
@@ -428,6 +468,16 @@ export default function PinyinTypingPractice() {
       )}
 
       {/* Main Practice Area */}
+      <div 
+        className="w-full"
+        onTouchStart={(e) => {
+          // Keep keyboard open on mobile when touching the screen
+          if (inputRef.current && !isCompleted && !isLoading) {
+            e.preventDefault();
+            inputRef.current.focus();
+          }
+        }}
+      >
       {isLoading ? (
         <div className="bg-white rounded-lg shadow-lg p-4 sm:p-8 w-full max-w-2xl">
           <div className="text-center">
@@ -511,6 +561,14 @@ export default function PinyinTypingPractice() {
               autoFocus
               inputMode="text"
               enterKeyHint="next"
+              onBlur={(e) => {
+                // Prevent keyboard from closing on mobile when tapping elsewhere
+                if (!isCompleted && !showCorrectAnswer) {
+                  setTimeout(() => {
+                    e.target.focus();
+                  }, 10);
+                }
+              }}
             />
             
             {/* Visual feedback */}
@@ -572,6 +630,7 @@ export default function PinyinTypingPractice() {
           <p className="text-sm sm:text-base text-black font-medium">No words available</p>
         </div>
       )}
+      </div>
     </div>
   );
 }
