@@ -8,7 +8,8 @@ export type VocabularyCategory =
   | 'animals'
   | 'verbs'
   | 'other'
-  | 'names';
+  | 'names'
+  | 'basic1';
 
 export interface VocabularyItem {
   id: string;

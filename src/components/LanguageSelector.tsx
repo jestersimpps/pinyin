@@ -7,23 +7,19 @@ export default function LanguageSelector() {
   const { language, setLanguage } = usePracticeStore();
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className="join">
       <button
         onClick={() => setLanguage('en')}
-        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-          language === 'en'
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-200 text-black hover:bg-gray-300'
+        className={`btn btn-sm join-item ${
+          language === 'en' ? 'btn-primary' : 'btn-ghost'
         }`}
       >
         EN
       </button>
       <button
         onClick={() => setLanguage('es')}
-        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-          language === 'es'
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-200 text-black hover:bg-gray-300'
+        className={`btn btn-sm join-item ${
+          language === 'es' ? 'btn-primary' : 'btn-ghost'
         }`}
       >
         ES

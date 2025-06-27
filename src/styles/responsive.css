@@ -1,0 +1,72 @@
+/* Mobile-first responsive styles */
+
+/* Ensure proper touch targets on mobile */
+@media (max-width: 640px) {
+  .btn {
+    min-height: 3rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .checkbox, .radio {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  input[type="text"] {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* Tablet and above adjustments */
+@media (min-width: 768px) {
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Desktop improvements */
+@media (min-width: 1024px) {
+  .card {
+    max-width: 56rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Ensure bottom navigation doesn't cover content on mobile */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 5rem);
+}
+
+/* Smooth transitions for theme changes */
+html[data-theme] * {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Better focus states for accessibility */
+.btn:focus-visible,
+.checkbox:focus-visible,
+.radio:focus-visible,
+.input:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* Ensure Chinese characters are readable on all screen sizes */
+.chinese-character {
+  font-size: clamp(3rem, 10vw, 8rem);
+  line-height: 1.2;
+}
+
+/* Improve readability on small screens */
+@media (max-width: 640px) {
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .stat {
+    padding: 0.75rem;
+  }
+}

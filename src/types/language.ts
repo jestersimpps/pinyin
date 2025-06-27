@@ -2,7 +2,6 @@ export type Language = 'en' | 'es';
 
 export interface Translations {
   title: string;
-  subtitle: string;
   selectCategories: string;
   selectAll: string;
   deselectAll: string;
@@ -42,13 +41,13 @@ export interface Translations {
     verbs: string;
     other: string;
     names: string;
+    basic1: string;
   };
 }
 
 export const translations: Record<Language, Translations> = {
   en: {
     title: 'Pinyin Practice',
-    subtitle: 'Learn Chinese by practicing pinyin at your own pace',
     selectCategories: 'Select categories:',
     selectAll: 'Select all',
     deselectAll: 'Deselect all',
@@ -87,12 +86,12 @@ export const translations: Record<Language, Translations> = {
       animals: 'Animals',
       verbs: 'Verbs',
       other: 'Other',
-      names: 'Names'
+      names: 'Names',
+      basic1: 'Basic 1 - Shopping & Money'
     }
   },
   es: {
     title: 'Práctica de Pinyin',
-    subtitle: 'Aprende chino practicando pinyin a tu propio ritmo',
     selectCategories: 'Seleccionar categorías:',
     selectAll: 'Seleccionar todas',
     deselectAll: 'Deseleccionar todas',
@@ -131,7 +130,8 @@ export const translations: Record<Language, Translations> = {
       animals: 'Animales',
       verbs: 'Verbos',
       other: 'Otros',
-      names: 'Nombres'
+      names: 'Nombres',
+      basic1: 'Básico 1 - Compras y Dinero'
     }
   }
 };

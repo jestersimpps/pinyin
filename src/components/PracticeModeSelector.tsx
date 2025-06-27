@@ -26,25 +26,27 @@ export default function PracticeModeSelector() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-black">{t.practiceMode}</h3>
+      <h3 className="text-base sm:text-lg font-semibold">{t.practiceMode}</h3>
       
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {(Object.keys(modeDescriptions) as PracticeMode[]).map(mode => (
           <label
             key={mode}
-            className="flex items-start space-x-3 cursor-pointer hover:bg-gray-50 p-3 rounded-lg border border-gray-200"
+            className="card bg-base-200 hover:bg-base-300 transition-colors cursor-pointer"
           >
-            <input
-              type="radio"
-              name="practiceMode"
-              value={mode}
-              checked={practiceMode === mode}
-              onChange={() => setPracticeMode(mode)}
-              className="mt-1 w-4 h-4 text-blue-600 focus:ring-blue-500"
-            />
-            <div className="flex-1">
-              <div className="font-medium text-black">{modeDescriptions[mode].label}</div>
-              <div className="text-sm text-black">{modeDescriptions[mode].description}</div>
+            <div className="card-body p-3 sm:p-4 flex-row items-start space-x-3">
+              <input
+                type="radio"
+                name="practiceMode"
+                value={mode}
+                checked={practiceMode === mode}
+                onChange={() => setPracticeMode(mode)}
+                className="radio radio-primary mt-1"
+              />
+              <div className="flex-1">
+                <div className="font-medium">{modeDescriptions[mode].label}</div>
+                <div className="text-xs sm:text-sm opacity-70">{modeDescriptions[mode].description}</div>
+              </div>
             </div>
           </label>
         ))}

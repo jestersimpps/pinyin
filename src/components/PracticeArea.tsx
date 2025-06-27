@@ -67,11 +67,11 @@ export default function PracticeArea() {
 
   if (!currentWord) {
     return (
-      <div className="text-center py-12">
-        <p className="text-black mb-4">
+      <div className="text-center py-8 sm:py-12">
+        <p className="mb-4">
           {t.noWordsAvailable}
         </p>
-        <p className="text-sm text-black">
+        <p className="text-sm">
           {t.selectCategoryPrompt}
         </p>
       </div>
@@ -79,10 +79,10 @@ export default function PracticeArea() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Progress Bar */}
       <div className="space-y-2">
-        <div className="flex justify-between text-sm text-black">
+        <div className="flex justify-between text-xs sm:text-sm">
           <span>
             {practiceMode === 'sequential' && `${t.word} ${progress.current}/${progress.total}`}
             {practiceMode === 'random' && `${progress.current}/${progress.total} ${t.uniqueWords}`}
@@ -90,24 +90,21 @@ export default function PracticeArea() {
           </span>
           <span>{Math.round(progressPercentage)}%</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div
-            className={`h-2 rounded-full transition-all duration-300 ${
-              allWordsSeen ? 'bg-green-600' : 'bg-blue-600'
-            }`}
-            style={{ width: `${progressPercentage}%` }}
-          />
-        </div>
+        <progress 
+          className="progress progress-primary w-full" 
+          value={progressPercentage} 
+          max="100"
+        />
       </div>
 
       {/* Main Character Display */}
-      <div className="text-center space-y-4">
-        <div className="text-8xl font-bold text-black">
+      <div className="text-center space-y-2 sm:space-y-4">
+        <div className="chinese-character font-bold">
           {currentWord.chinese}
         </div>
         
         {showTranslation && (
-          <div className="text-xl text-black">
+          <div className="text-base sm:text-lg md:text-xl">
             {currentWord.english}
           </div>
         )}
@@ -123,13 +120,13 @@ export default function PracticeArea() {
             onChange={(e) => setUserInput(e.target.value)}
             placeholder={t.writePinyinHere}
             disabled={showAnswer}
-            className={`w-full px-4 py-3 text-lg text-black border rounded-lg focus:outline-none focus:ring-2 ${
+            className={`input input-bordered w-full text-base sm:text-lg ${
               isCorrect === true
-                ? 'border-green-500 focus:ring-green-500'
+                ? 'input-success'
                 : isCorrect === false
-                ? 'border-red-500 focus:ring-red-500'
-                : 'border-gray-300 focus:ring-blue-500'
-            } ${showAnswer ? 'bg-gray-100' : ''}`}
+                ? 'input-error'
+                : 'input-primary'
+            } ${showAnswer ? 'opacity-50' : ''}`}
           />
           
           {isCorrect !== null && (
@@ -145,31 +142,33 @@ export default function PracticeArea() {
 
         {/* Answer Display */}
         {showAnswer && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="text-sm text-blue-600 mb-1">{t.correctAnswer}</div>
-            <div className="text-xl font-semibold text-blue-800">{currentWord.pinyin}</div>
-            <div className="text-sm text-blue-600 mt-2">{currentWord.english}</div>
-            <div className="text-sm text-black mt-3">
-              {t.writeCorrectAnswer}
+          <div className="alert alert-info">
+            <div>
+              <div className="text-sm mb-1">{t.correctAnswer}</div>
+              <div className="text-lg sm:text-xl font-semibold">{currentWord.pinyin}</div>
+              <div className="text-sm mt-2">{currentWord.english}</div>
+              <div className="text-sm mt-3">
+                {t.writeCorrectAnswer}
+              </div>
             </div>
           </div>
         )}
 
         {/* Success Message */}
         {isCorrect === true && !showAnswer && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-            <div className="text-green-800 font-semibold">¡Correcto! ✓</div>
+          <div className="alert alert-success">
+            <div className="font-semibold">¡Correcto! ✓</div>
           </div>
         )}
       </form>
 
       {/* Action Buttons */}
-      <div className="flex gap-3 justify-center">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
         {!showAnswer && !isCorrect && (
           <>
             <button
               onClick={handleShowHint}
-              className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+              className="btn btn-warning btn-sm sm:btn-md"
               title="Mostrar pista"
             >
               💡 Pista
@@ -177,7 +176,7 @@ export default function PracticeArea() {
             
             <button
               onClick={handleShowAnswer}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              className="btn btn-error btn-sm sm:btn-md"
             >
               Mostrar respuesta
             </button>
@@ -186,7 +185,7 @@ export default function PracticeArea() {
         
         <button
           onClick={handleNextWord}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="btn btn-primary btn-sm sm:btn-md"
         >
           Siguiente palabra →
         </button>

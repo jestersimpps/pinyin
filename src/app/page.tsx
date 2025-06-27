@@ -6,6 +6,8 @@ import PracticeModeSelector from '@/components/PracticeModeSelector';
 import PracticeStats from '@/components/PracticeStats';
 import PracticeArea from '@/components/PracticeArea';
 import LanguageSelector from '@/components/LanguageSelector';
+import ThemeToggle from '@/components/ThemeToggle';
+import MobileBottomNav from '@/components/MobileBottomNav';
 import usePracticeStore from '@/lib/store';
 import { translations } from '@/types/language';
 
@@ -39,81 +41,92 @@ export default function Home() {
   const filteredWords = getFilteredWords();
 
   return (
-    <main className="min-h-screen bg-gray-100">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <header className="text-center mb-8">
-          <div className="flex justify-center items-center gap-4 mb-4">
-            <h1 className="text-4xl font-bold text-black">
-              {t.title}
-            </h1>
-            <LanguageSelector />
+    <main className="min-h-screen bg-base-200">
+      <div className="container mx-auto px-4 py-4 sm:py-6 lg:py-8 max-w-7xl pb-20 lg:pb-8">
+        <header className="mb-6 sm:mb-8">
+          <div className="navbar bg-base-100 rounded-lg shadow-md px-4">
+            <div className="flex-1">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
+                {t.title}
+              </h1>
+            </div>
+            <div className="flex-none gap-2">
+              <LanguageSelector />
+              <ThemeToggle />
+            </div>
           </div>
-          <p className="text-black">
-            {t.subtitle}
-          </p>
         </header>
 
         {isSetup ? (
-          <div className="bg-white rounded-lg shadow-lg p-6 space-y-6">
-            <CategorySelector />
-            
-            <div className="border-t pt-6">
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body p-4 sm:p-6 space-y-4 sm:space-y-6">
+              <CategorySelector />
+              
+              <div className="divider my-0"></div>
+              
               <PracticeModeSelector />
-            </div>
-            
-            <div className="border-t pt-6">
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showTranslation}
-                  onChange={(e) => setShowTranslation(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-                <span className="text-lg text-black">{t.showTranslation}</span>
-              </label>
-            </div>
-            
-            <div className="border-t pt-6 text-center">
-              <div className="text-sm text-black mb-4">
-                {filteredWords.length} {t.wordsAvailable}
+              
+              <div className="divider my-0"></div>
+              
+              <div className="form-control">
+                <label className="label cursor-pointer justify-start">
+                  <input
+                    type="checkbox"
+                    checked={showTranslation}
+                    onChange={(e) => setShowTranslation(e.target.checked)}
+                    className="checkbox checkbox-primary"
+                  />
+                  <span className="label-text ml-3 text-base sm:text-lg">{t.showTranslation}</span>
+                </label>
               </div>
-              <button
-                onClick={handleStartPractice}
-                className="px-8 py-3 bg-blue-600 text-white text-lg rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                {t.startPractice}
-              </button>
+              
+              <div className="divider my-0"></div>
+              
+              <div className="text-center">
+                <div className="text-sm mb-4">
+                  {filteredWords.length} {t.wordsAvailable}
+                </div>
+                <button
+                  onClick={handleStartPractice}
+                  className="btn btn-primary btn-lg w-full sm:w-auto"
+                >
+                  {t.startPractice}
+                </button>
+              </div>
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="hidden sm:flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <button
                 onClick={handleBackToSetup}
-                className="px-4 py-2 text-black hover:text-gray-800 transition-colors"
+                className="btn btn-ghost btn-sm"
               >
                 {t.backToSetup}
               </button>
               
-              <label className="flex items-center space-x-2 cursor-pointer">
+              <label className="label cursor-pointer gap-2">
                 <input
                   type="checkbox"
                   checked={showTranslation}
                   onChange={(e) => setShowTranslation(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="checkbox checkbox-primary checkbox-sm"
                 />
-                <span className="text-black">{t.translation}</span>
+                <span className="label-text">{t.translation}</span>
               </label>
             </div>
             
             <PracticeStats />
             
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <PracticeArea />
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body p-4 sm:p-6">
+                <PracticeArea />
+              </div>
             </div>
           </div>
         )}
       </div>
+      <MobileBottomNav isSetup={isSetup} onBackToSetup={handleBackToSetup} />
     </main>
   );
 }
