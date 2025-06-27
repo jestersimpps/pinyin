@@ -102,7 +102,7 @@ export default function Home() {
                 onClick={handleBackToSetup}
                 className="btn btn-ghost btn-sm"
               >
-                {t.backToSetup}
+                ← {t.backToSetup}
               </button>
               
               <label className="label cursor-pointer gap-2">

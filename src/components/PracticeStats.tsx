@@ -25,30 +25,30 @@ export default function PracticeStats() {
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-      <div className="stat bg-base-100 shadow">
-        <div className="stat-title text-xs sm:text-sm">{t.accuracy}</div>
-        <div className={`stat-value text-xl sm:text-2xl ${getAccuracyColor(accuracy)}`}>
+      <div className="stat bg-base-100 shadow p-2 sm:p-4">
+        <div className="stat-title text-[10px] sm:text-sm">{t.accuracy}</div>
+        <div className={`stat-value text-lg sm:text-2xl lg:text-3xl ${getAccuracyColor(accuracy)}`}>
           {accuracy}%
         </div>
       </div>
       
-      <div className="stat bg-base-100 shadow">
-        <div className="stat-title text-xs sm:text-sm">{t.wordsLearned}</div>
-        <div className="stat-value text-xl sm:text-2xl text-primary">
+      <div className="stat bg-base-100 shadow p-2 sm:p-4">
+        <div className="stat-title text-[10px] sm:text-sm">{t.wordsLearned}</div>
+        <div className="stat-value text-lg sm:text-2xl lg:text-3xl text-primary">
           {wordsLearned}
         </div>
       </div>
       
-      <div className="stat bg-base-100 shadow">
-        <div className="stat-title text-xs sm:text-sm">{t.currentStreak}</div>
-        <div className="stat-value text-xl sm:text-2xl text-warning">
+      <div className="stat bg-base-100 shadow p-2 sm:p-4">
+        <div className="stat-title text-[10px] sm:text-sm">{t.currentStreak}</div>
+        <div className="stat-value text-lg sm:text-2xl lg:text-3xl text-warning">
           {currentStreak}
         </div>
       </div>
       
-      <div className="stat bg-base-100 shadow">
-        <div className="stat-title text-xs sm:text-sm">{t.bestStreak}</div>
-        <div className="stat-value text-xl sm:text-2xl text-secondary">
+      <div className="stat bg-base-100 shadow p-2 sm:p-4">
+        <div className="stat-title text-[10px] sm:text-sm">{t.bestStreak}</div>
+        <div className="stat-value text-lg sm:text-2xl lg:text-3xl text-secondary">
           {bestStreak}
         </div>
       </div>

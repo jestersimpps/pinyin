@@ -4,3 +4,27 @@
 
 /* Import responsive styles */
 @import "../styles/responsive.css";
+
+/* Chinese character styles */
+.chinese-character {
+  font-size: 4rem;
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  .chinese-character {
+    font-size: 5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .chinese-character {
+    font-size: 6rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .chinese-character {
+    font-size: 7rem;
+  }
+}
