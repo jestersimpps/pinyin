@@ -1,13 +1,22 @@
 /* Mobile-first responsive styles */
 
 /* Fix mobile scrolling issues */
-html, body {
+html {
   overflow-x: hidden;
+  height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  min-height: 100%;
+  position: relative;
 }
 
 main {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
+  height: 100%;
+  position: relative;
 }
 
 /* Ensure proper touch targets on mobile */
