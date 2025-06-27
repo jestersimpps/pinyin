@@ -41,7 +41,7 @@ export default function Home() {
   const filteredWords = getFilteredWords();
 
   return (
-    <main className="min-h-screen bg-base-200">
+    <main className="min-h-screen min-h-[100dvh] bg-base-200 overflow-y-auto">
       <div className="container mx-auto px-4 py-4 sm:py-6 lg:py-8 max-w-7xl pb-20 lg:pb-8">
         <header className="mb-6 sm:mb-8">
           <div className="navbar bg-base-100 rounded-lg shadow-md px-4">

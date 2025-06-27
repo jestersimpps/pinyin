@@ -1,5 +1,15 @@
 /* Mobile-first responsive styles */
 
+/* Fix mobile scrolling issues */
+html, body {
+  overflow-x: hidden;
+}
+
+main {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
 /* Ensure proper touch targets on mobile */
 @media (max-width: 640px) {
   .btn {
